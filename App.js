@@ -1,17 +1,11 @@
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { SafeAreaView, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import * as SplashScreen from "expo-splash-screen"; // Import expo-splash-screen
-import SplashScreenComponent from "./screens/SplashScreen";
-import LoginScreen from "./screens/LoginScreen";
-import SignupScreen from "./screens/SignupScreen";
+import * as SplashScreen from "expo-splash-screen";
+import { AuthProvider } from "./context/AuthContext";
+import AppNavigator from "./navigation/AppNavigator"; // Updated import path to match the file structure
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
-
-const Stack = createNativeStackNavigator();
 
 const App = () => {
   React.useEffect(() => {
@@ -23,19 +17,11 @@ const App = () => {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar barStyle="dark-content" />
-        <Stack.Navigator
-          initialRouteName="Splash"
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Splash" component={SplashScreenComponent} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <SafeAreaProvider>
+        <AppNavigator />
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 };
 
