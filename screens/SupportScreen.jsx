@@ -6,10 +6,15 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Linking,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 const SupportScreen = ({ navigation }) => {
+  const handleEmailPress = () => {
+    Linking.openURL("mailto:EasyRide@global.com");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -24,9 +29,11 @@ const SupportScreen = ({ navigation }) => {
       </View>
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.supportText}>
-          If you have any requests or need to contact the team, reach us at
-          EasyRide@global.com
+          If you have requests or need to contact the team, Reach us at
         </Text>
+        <TouchableOpacity onPress={handleEmailPress}>
+          <Text style={styles.emailText}>EasyRide@global.com</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -67,6 +74,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     lineHeight: 24,
+  },
+  emailText: {
+    textAlign: "center",
+    fontSize: 16,
+    lineHeight: 24,
+    color: "#FF8C00", // Orange color
+    textDecorationLine: "underline",
   },
 });
 
