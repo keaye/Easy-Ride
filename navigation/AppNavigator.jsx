@@ -16,7 +16,9 @@ import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 // App Screens (you'll need to create these)
 import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
-import SettingsScreen from "../screens/SettingsScreen";
+import PaymentScreen from "../screens/PaymentScreen";
+import AboutScreen from "../screens/AboutScreen"; 
+import SupportScreen from "../screens/SupportScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -72,7 +74,9 @@ const AppNavigator = () => {
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
-            {/* <Tab.Screen name="Settings" component={SettingsScreen} /> */}
+            <Tab.Screen name="Payment" component={PaymentScreen} /> 
+            <Tab.Screen name="About" component={AboutScreen} />
+            <Tab.Screen name="Support" component={SupportScreen} />
           </>
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />

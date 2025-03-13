@@ -468,7 +468,7 @@ const HomeScreen = ({ navigation }) => {
                 <Ionicons name="person-outline" size={40} color="#777" />
               </View>
               <View style={styles.userInfo}>
-                 <Text style={styles.userName}>{user.name}</Text>
+                <Text style={styles.userName}>{user.name}</Text>
                 <TouchableOpacity onPress={() => nav.navigate("Profile")}>
                   <Text style={styles.viewProfile}>View profile</Text>
                 </TouchableOpacity>
@@ -481,14 +481,18 @@ const HomeScreen = ({ navigation }) => {
                 <View style={styles.menuIconContainer}>
                   <Ionicons name="card-outline" size={24} color="#555" />
                 </View>
-                <Text style={styles.menuItemText}>Payment</Text>
+                <TouchableOpacity onPress={() => nav.navigate("Payment")}>
+                  <Text style={styles.menuItemText}>Payment</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.menuItem}>
                 <View style={styles.menuIconContainer}>
                   <Ionicons name="help-circle-outline" size={24} color="#555" />
                 </View>
-                <Text style={styles.menuItemText}>Support</Text>
+                <TouchableOpacity onPress={() => nav.navigate("Support")}>
+                  <Text style={styles.menuItemText}>Support</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.menuItem}>
@@ -499,7 +503,9 @@ const HomeScreen = ({ navigation }) => {
                     color="#555"
                   />
                 </View>
-                <Text style={styles.menuItemText}>About</Text>
+                <TouchableOpacity onPress={() => nav.navigate("About")}>
+                  <Text style={styles.menuItemText}>About</Text>
+                </TouchableOpacity>
               </TouchableOpacity>
             </View>
 
