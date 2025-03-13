@@ -1,0 +1,4 @@
+<resources>
+  <string name="app_name">Easy_Ride</string>
+  <string name="default_web_client_id">894165136627-cjpsqd3t1daia6sj2eoth0nnovg86khe.apps.googleusercontent.com</string> <!-- Replace with your web client ID -->
+</resources>

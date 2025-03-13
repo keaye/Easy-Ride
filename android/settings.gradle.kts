@@ -1,0 +1,2 @@
+include ':@react-native-google-signin_google-signin'
+project(':@react-native-google-signin_google-signin').projectDir = new File(rootProject.projectDir, '../node_modules/@react-native-google-signin/google-signin/android')

@@ -1,4 +1,3 @@
-// context/AuthContext.js
 import React, {
   createContext,
   useState,
@@ -15,7 +14,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore"; // Added getDoc for fetching existing data
 
 const AuthContext = createContext({});
 
@@ -46,17 +45,14 @@ const authReducer = (state, action) => {
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Listen for authentication state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // User is signed in
         dispatch({ type: "SET_USER", payload: user });
         const token = await user.getIdToken();
         dispatch({ type: "SET_USER_TOKEN", payload: token });
         await AsyncStorage.setItem("userToken", token);
       } else {
-        // User is signed out
         dispatch({ type: "SET_USER", payload: null });
         dispatch({ type: "SET_USER_TOKEN", payload: null });
         await AsyncStorage.removeItem("userToken");
@@ -64,16 +60,14 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: "SET_LOADING", payload: false });
     });
 
-    // Cleanup subscription
     return () => unsubscribe();
   }, []);
 
-  const signup = async (username, email, password) => {
+  const signup = async (name, email, password) => {
     dispatch({ type: "SET_LOADING", payload: true });
     dispatch({ type: "CLEAR_ERROR" });
 
     try {
-      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -81,27 +75,32 @@ export const AuthProvider = ({ children }) => {
       );
       const user = userCredential.user;
 
-      // Update user profile with username
-      await updateProfile(user, { displayName: username });
+      await updateProfile(user, { displayName: userName });
 
-      // Store additional user data in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        username,
-        email,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-      });
+      await setDoc(
+        doc(db, "users", user.uid),
+        {
+          name,
+          email,
+          displayName: userName, // Sync with Authentication
+          createdAt: new Date(),
+          lastLogin: new Date(),
+        },
+        { merge: true }
+      );
 
-      // Get user token
       const token = await user.getIdToken();
       await AsyncStorage.setItem("userToken", token);
       dispatch({ type: "SET_USER_TOKEN", payload: token });
-      dispatch({ type: "SET_USER", payload: user });
+      dispatch({ type: "SET_USER", payload: { ...user, displayName: name } });
       dispatch({ type: "SET_LOADING", payload: false });
       return true;
     } catch (error) {
       console.log("Signup error:", error);
-      dispatch({ type: "SET_ERROR", payload: parseFirebaseError(error.code) });
+      dispatch({
+        type: "SET_ERROR",
+        payload: parseFirebaseError(error.code || error.message),
+      });
       dispatch({ type: "SET_LOADING", payload: false });
       return false;
     }
@@ -112,22 +111,12 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: "CLEAR_ERROR" });
 
     try {
-      // Sign in with email and password
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
-
-      // Update last login time in Firestore
-      await setDoc(
-        doc(db, "users", user.uid),
-        { lastLogin: new Date() },
-        { merge: true }
-      );
-
-      // Get user token
       const token = await user.getIdToken();
       await AsyncStorage.setItem("userToken", token);
       dispatch({ type: "SET_USER_TOKEN", payload: token });
@@ -136,7 +125,10 @@ export const AuthProvider = ({ children }) => {
       return true;
     } catch (error) {
       console.log("Login error:", error);
-      dispatch({ type: "SET_ERROR", payload: parseFirebaseError(error.code) });
+      dispatch({
+        type: "SET_ERROR",
+        payload: parseFirebaseError(error.code || error.message),
+      });
       dispatch({ type: "SET_LOADING", payload: false });
       return false;
     }
@@ -158,7 +150,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Helper function to parse Firebase error codes into user-friendly messages
   const parseFirebaseError = (errorCode) => {
     switch (errorCode) {
       case "auth/email-already-in-use":

@@ -71,8 +71,8 @@ const AppNavigator = () => {
         {userToken ? (
           <>
             <Stack.Screen name="Home" component={HomeScreen} />
-            {/* <Tab.Screen name="Profile" component={ProfileScreen} />
-            <Tab.Screen name="Settings" component={SettingsScreen} /> */}
+            <Tab.Screen name="Profile" component={ProfileScreen} />
+            {/* <Tab.Screen name="Settings" component={SettingsScreen} /> */}
           </>
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />

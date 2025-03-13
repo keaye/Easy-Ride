@@ -10,6 +10,7 @@ import {
   Modal,
   TextInput,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import MapView, { PROVIDER_GOOGLE, Circle, Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,9 +18,11 @@ import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import * as Location from "expo-location";
+import { getUsernameFromEmail } from "../utils"; // Import the utility function
 
 const HomeScreen = ({ navigation }) => {
-  const { logout } = useAuth();
+  const { currentUser } = useAuth();
+  const nav = useNavigation();
   const [region, setRegion] = useState({
     latitude: 7.2906,
     longitude: 5.1368,
@@ -42,6 +45,29 @@ const HomeScreen = ({ navigation }) => {
   const [pickupSearchResults, setPickupSearchResults] = useState([]);
   const [currentLocationName, setCurrentLocationName] = useState("");
 
+  const [user, setUser] = useState({
+    name: "",
+  });
+  
+   useEffect(() => {
+     if (currentUser) {
+       const fetchUserData = async () => {
+         const userDocRef = doc(db, "users", currentUser.uid);
+         const userDoc = await getDoc(userDocRef);
+         if (userDoc.exists()) {
+           const userData = userDoc.data();
+           setUser({
+             name: currentUser.displayName || userData.name || "",
+            
+           });
+           setSelectedLanguage(userData.language || "English - US");
+         }
+       };
+
+       fetchUserData();
+     }
+   }, [currentUser]);
+  
   const searchNearbyPlaces = async (searchText, location) => {
     try {
       // Don't make API calls for very short search terms
@@ -211,6 +237,22 @@ const HomeScreen = ({ navigation }) => {
     fetchRecentLocations();
   }, []);
 
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (currentUser?.uid) {
+        const userDoc = await getDocs(
+          collection(db, `users/${currentUser.uid}/profile`)
+        );
+        const userData = userDoc.docs[0]?.data();
+        if (userData?.displayName) {
+          // Update AuthContext or local state if needed
+          console.log("Fetched displayName:", userData.displayName);
+        }
+      }
+    };
+    fetchUserProfile();
+  }, [currentUser]);
+
   const updateCurrentLocationName = async () => {
     if (userLocation) {
       const address = await getAddressFromCoordinates(
@@ -244,46 +286,41 @@ const HomeScreen = ({ navigation }) => {
 
   // Animation for panel swiping
   const panelHeight = useRef(new Animated.Value(0)).current;
-  const maxPanelHeight = 500; // Maximum height when fully expanded
+  const maxPanelHeight = 400; // Maximum height when fully expanded
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (evt, gestureState) => {
-        if (gestureState.dy < 0 && !expanded) {
-          // Swiping up when not expanded
-          // Convert negative dy to positive value for height
-          const newHeight = Math.min(-gestureState.dy, maxPanelHeight);
-          panelHeight.setValue(newHeight);
-        } else if (gestureState.dy > 0 && expanded) {
-          // Swiping down when expanded
-          // Subtract from maxHeight to reduce panel height
-          const newHeight = Math.max(maxPanelHeight - gestureState.dy, 0);
-          panelHeight.setValue(newHeight);
+        if (gestureState.dy < 0) {
+          // Swiping up
+          Animated.timing(panelHeight, {
+            toValue: Math.min(-gestureState.dy, maxPanelHeight),
+            duration: 0,
+            useNativeDriver: false,
+          }).start();
+        } else {
+          // Swiping down
+          Animated.timing(panelHeight, {
+            toValue: Math.max(-gestureState.dy, 0),
+            duration: 0,
+            useNativeDriver: false,
+          }).start();
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
-        if (gestureState.dy < -50 && !expanded) {
-          // Swipe up threshold met (negative dy means upward swipe)
-          Animated.spring(panelHeight, {
+        if (gestureState.dy < -10) {
+          // Swipe up to open
+          Animated.timing(panelHeight, {
             toValue: maxPanelHeight,
+            duration: 300,
             useNativeDriver: false,
           }).start();
-          setExpanded(true);
-        } else if (gestureState.dy > 50 && expanded) {
-          // Swipe down threshold met
-          Animated.spring(panelHeight, {
+        } else if (gestureState.dy > 10) {
+          // Swipe down to close
+          Animated.timing(panelHeight, {
             toValue: 0,
-            useNativeDriver: false,
-          }).start(() => {
-            // This callback runs after animation completes
-            setExpanded(false);
-            setShowRideSelection(false);
-          });
-        } else {
-          // Return to original position based on current state
-          Animated.spring(panelHeight, {
-            toValue: expanded ? maxPanelHeight : 0,
+            duration: 300,
             useNativeDriver: false,
           }).start();
         }
@@ -310,9 +347,8 @@ const HomeScreen = ({ navigation }) => {
   ).current;
 
   const rides = [
-    { type: "Toyota Camry", capacity: "2-3 people", price: 500 },
-    { type: "Shuttle", capacity: "15 people", price: 2500 },
-    { type: "Tricycle", capacity: "2-3 people", price: 400 },
+    { type: "Toyota Camry", capacity: "Black", price: 500 },
+    { type: "Lexus ES 350", capacity: "Gray", price: 600 },
   ];
 
   const handleLocationSelect = (location, type) => {
@@ -384,8 +420,36 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  // Add the code to display predefined rides once the destination and pickup are selected
+
+  const renderRideOptions = () => {
+    if (!showRideSelection) return null;
+
+    return (
+      <View style={styles.rideOptionsContainer}>
+        {rides.map((ride, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.rideOption}
+            onPress={() => setSelectedRide(ride)}
+          >
+            <Text style={styles.rideOptionText}>{ride.type}</Text>
+            <Text style={styles.rideOptionText}>{ride.capacity}</Text>
+            <Text style={styles.rideOptionText}>₦{ride.price}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   // Your existing render methods...
   const renderMenuPanel = () => {
+    // Use currentUser.displayName or fallback to email if displayName is not available
+    const userName =
+      currentUser?.displayName ||
+      getUsernameFromEmail(currentUser?.email) ||
+      "User";
+
     return (
       <Modal
         visible={showMenu}
@@ -404,8 +468,8 @@ const HomeScreen = ({ navigation }) => {
                 <Ionicons name="person-outline" size={40} color="#777" />
               </View>
               <View style={styles.userInfo}>
-                <Text style={styles.userName}>Dave</Text>
-                <TouchableOpacity>
+                 <Text style={styles.userName}>{user.name}</Text>
+                <TouchableOpacity onPress={() => nav.navigate("Profile")}>
                   <Text style={styles.viewProfile}>View profile</Text>
                 </TouchableOpacity>
               </View>
@@ -418,30 +482,6 @@ const HomeScreen = ({ navigation }) => {
                   <Ionicons name="card-outline" size={24} color="#555" />
                 </View>
                 <Text style={styles.menuItemText}>Payment</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="pricetag-outline" size={24} color="#555" />
-                </View>
-                <View style={styles.menuItemTextContainer}>
-                  <Text style={styles.menuItemText}>Promotions</Text>
-                  <Text style={styles.menuItemSubtext}>Enter promo code</Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="time-outline" size={24} color="#555" />
-                </View>
-                <Text style={styles.menuItemText}>My Rides</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="briefcase-outline" size={24} color="#555" />
-                </View>
-                <Text style={styles.menuItemText}>Expense Your Rides</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.menuItem}>
@@ -461,17 +501,10 @@ const HomeScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.menuItemText}>About</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.menuItem} onPress={logout}>
-                <View style={styles.menuIconContainer}>
-                  <Ionicons name="log-out-outline" size={24} color="#555" />
-                </View>
-                <Text style={styles.menuItemText}>Logout</Text>
-              </TouchableOpacity>
             </View>
 
             {/* Become a driver banner */}
-            <View style={styles.driverBanner}>
+            {/* <View style={styles.driverBanner}>
               <View style={styles.driverBannerContent}>
                 <Text style={styles.driverBannerTitle}>Become a driver</Text>
                 <Text style={styles.driverBannerSubtext}>
@@ -481,7 +514,7 @@ const HomeScreen = ({ navigation }) => {
               <TouchableOpacity style={styles.closeBannerButton}>
                 <Ionicons name="close" size={20} color="#555" />
               </TouchableOpacity>
-            </View>
+            </View> */}
           </View>
         </View>
       </Modal>
@@ -720,6 +753,9 @@ const HomeScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.indicatorBar} />
+
+          {/* Render ride options */}
+          {renderRideOptions()}
         </View>
       </Animated.View>
     );
@@ -1327,6 +1363,21 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
+  },
+  rideOptionsContainer: {
+    padding: 10,
+  },
+  rideOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  rideOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
 

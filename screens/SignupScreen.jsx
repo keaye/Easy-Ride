@@ -16,7 +16,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const SignupScreen = ({ navigation }) => {
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -76,7 +76,7 @@ const SignupScreen = ({ navigation }) => {
 
   const handleSignup = async () => {
     // Validate inputs
-    if (!username || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
@@ -101,10 +101,10 @@ const SignupScreen = ({ navigation }) => {
       return;
     }
 
-    const success = await signup(username, email, password);
+    const success = await signup(name, email, password);
 
     if (success) {
-      Alert.alert("Success", "Account created successfully. Please log in.");
+      Alert.alert("Success", "Account created successfully. You're logged in.");
       navigation.navigate("Login"); // Redirect to login page
     } else if (authError) {
       Alert.alert("Signup Failed", authError);
@@ -129,10 +129,10 @@ const SignupScreen = ({ navigation }) => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Username"
+            placeholder="Name"
             placeholderTextColor="#999"
-            value={username}
-            onChangeText={setUsername}
+            value={name}
+            onChangeText={setName}
           />
           <TextInput
             style={styles.input}
@@ -188,12 +188,12 @@ const SignupScreen = ({ navigation }) => {
           <TouchableOpacity
             style={[
               styles.signUpButton,
-              (!username || !email || !password || !confirmPassword) &&
+              (!name || !email || !password || !confirmPassword) &&
                 styles.signUpButtonDisabled,
             ]}
             onPress={handleSignup}
             disabled={
-              isLoading || !username || !email || !password || !confirmPassword
+              isLoading || !name || !email || !password || !confirmPassword
             }
           >
             {isLoading ? (
