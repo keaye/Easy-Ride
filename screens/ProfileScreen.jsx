@@ -52,6 +52,8 @@ const ProfileScreen = ({ navigation }) => {
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          console.log("Fetched user data:", userData);
+          console.log("Current user display name:", currentUser.displayName);
           setUser({
             name: currentUser.displayName || userData.name || "",
             phone: userData.phone || currentUser.phoneNumber || "",
@@ -61,7 +63,7 @@ const ProfileScreen = ({ navigation }) => {
           setSelectedLanguage(userData.language || "English - US");
         }
       };
-      
+
       fetchUserData();
     }
   }, [currentUser]);
@@ -124,7 +126,6 @@ const ProfileScreen = ({ navigation }) => {
             <Text style={styles.userEmail}>{user.email}</Text>
           </View>
         </View>
-
 
         {/* Language Section */}
         <View style={styles.section}>

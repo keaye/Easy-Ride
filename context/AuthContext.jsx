@@ -75,14 +75,14 @@ export const AuthProvider = ({ children }) => {
       );
       const user = userCredential.user;
 
-      await updateProfile(user, { displayName: userName });
+      await updateProfile(user, { displayName: name });
 
       await setDoc(
         doc(db, "users", user.uid),
         {
           name,
           email,
-          displayName: userName, // Sync with Authentication
+          displayName: name, // Sync with Authentication
           createdAt: new Date(),
           lastLogin: new Date(),
         },
