@@ -875,7 +875,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "transparent",
     position: "absolute",
-    top: 30, // Adjusted to bring down the header
+    top: 3, // Adjusted to bring down the header
     left: 0,
     right: 0,
     zIndex: 10,
