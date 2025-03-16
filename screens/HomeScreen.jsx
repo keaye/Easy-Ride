@@ -15,13 +15,12 @@ import MapView, { PROVIDER_GOOGLE, Circle, Marker } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import * as Location from "expo-location";
-import { getUsernameFromEmail } from "../utils"; // Import the utility function
 
 const HomeScreen = ({ navigation }) => {
-  const { currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const nav = useNavigation();
   const [region, setRegion] = useState({
     latitude: 7.2906,
@@ -56,11 +55,13 @@ const HomeScreen = ({ navigation }) => {
          const userDoc = await getDoc(userDocRef);
          if (userDoc.exists()) {
            const userData = userDoc.data();
+           console.log("Fetched user data:", userData);
+           console.log("Current user display name:", currentUser.displayName);
            setUser({
              name: currentUser.displayName || userData.name || "",
             
            });
-           setSelectedLanguage(userData.language || "English - US");
+           
          }
        };
 
@@ -237,20 +238,24 @@ const HomeScreen = ({ navigation }) => {
     fetchRecentLocations();
   }, []);
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (currentUser?.uid) {
-        const userDoc = await getDocs(
-          collection(db, `users/${currentUser.uid}/profile`)
-        );
-        const userData = userDoc.docs[0]?.data();
-        if (userData?.displayName) {
-          // Update AuthContext or local state if needed
-          console.log("Fetched displayName:", userData.displayName);
+ useEffect(() => {
+    if (currentUser) {
+      const fetchUserData = async () => {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          console.log("Fetched user data:", userData);
+          console.log("Current user display name:", currentUser.displayName);
+          setUser({
+            name: currentUser.displayName || userData.name || "",
+          });
+          
         }
-      }
-    };
-    fetchUserProfile();
+      };
+
+      fetchUserData();
+    }
   }, [currentUser]);
 
   const updateCurrentLocationName = async () => {
@@ -445,10 +450,6 @@ const HomeScreen = ({ navigation }) => {
   // Your existing render methods...
   const renderMenuPanel = () => {
     // Use currentUser.displayName or fallback to email if displayName is not available
-    const userName =
-      currentUser?.displayName ||
-      getUsernameFromEmail(currentUser?.email) ||
-      "User";
 
     return (
       <Modal
